@@ -30,7 +30,7 @@ namespace tests.FontTest
 			"fonts/ThonburiBold.ttf"
 
 #endif
-#if WINDOWS || WINDOWSGL
+#if WINDOWS || WINDOWSGL || NETFX_CORE
 			"Comic Sans MS",
 			"Felt",
 			"MoolBoran",
@@ -146,7 +146,7 @@ namespace tests.FontTest
 
 		private CCSize blockSize;
         private CCSize visibleRect;
-		private float fontSize = 26;
+		private float fontSize = 36;
 
 
 		public SystemFontTest()
@@ -178,7 +178,7 @@ namespace tests.FontTest
             AddChild(rightColor, -1);
             AddChild(centerColor, -1);
 
-            showFont(FontTestScene.restartAction());
+            showFont(SystemFontTestScene.restartAction());
         }
 
 
@@ -199,15 +199,15 @@ namespace tests.FontTest
 			RemoveChildByTag(kTagLabel3, true);
 			RemoveChildByTag(kTagLabel4, true);
 
-			var top = new CCLabel(pFont,"Helvetica", 32);
+            var top = new CCLabel(pFont,"Helvetica", 32);
 
-			var left = new CCLabel("alignment left", pFont, fontSize,
-				blockSize, CCTextAlignment.Left,
-				SystemFontTestScene.verticalAlignment[SystemFontTestScene.verticalAlignIdx]);
-
-			var center = new CCLabel("alignment center", pFont, fontSize,
+            var center = new CCLabel("alignment center", pFont, fontSize,
 				blockSize, CCTextAlignment.Center,
 				SystemFontTestScene.verticalAlignment[SystemFontTestScene.verticalAlignIdx]);
+
+            var left = new CCLabel("alignment left", pFont, fontSize,
+                blockSize, CCTextAlignment.Left,
+                SystemFontTestScene.verticalAlignment[SystemFontTestScene.verticalAlignIdx]);
 
 			var right = new CCLabel("alignment right", pFont, fontSize,
 				blockSize, CCTextAlignment.Right,

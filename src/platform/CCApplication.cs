@@ -88,9 +88,15 @@ namespace CocosSharp
             var graphics = new GraphicsDeviceManager(this);
 #endif
 
-#if WINDOWS || WINDOWSGL || MACOS
+#if WINDOWS || WINDOWSGL || MACOS || WINRT
             this.IsMouseVisible = true;
 #endif
+
+#if WINRT
+            TouchPanel.EnableMouseTouchPoint = true;
+            TouchPanel.EnableMouseGestures = true;
+#endif
+
 		}
 
         /// <summary>
@@ -415,8 +421,26 @@ namespace CocosSharp
 		{
 			if (isFullscreen)
 			{
-				windowSizeInPixels.Width = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
-				windowSizeInPixels.Height = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+#if NETFX_CORE
+                //  GraphicsAdapter values are not set correctly when it gets to here so we used the
+                //  DeviceManager values.
+                //if (xnaDeviceManager.GraphicsDevice.DisplayMode.)
+                if (xnaGame.Window.CurrentOrientation == DisplayOrientation.Portrait
+                    || xnaGame.Window.CurrentOrientation == DisplayOrientation.PortraitDown)
+                {
+                    windowSizeInPixels.Width = xnaDeviceManager.PreferredBackBufferHeight;
+                    windowSizeInPixels.Height = xnaDeviceManager.PreferredBackBufferWidth;
+                }
+                else
+                {
+                    windowSizeInPixels.Width = xnaDeviceManager.PreferredBackBufferWidth;
+                    windowSizeInPixels.Height = xnaDeviceManager.PreferredBackBufferHeight;
+
+                }
+#else
+                windowSizeInPixels.Width = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+                windowSizeInPixels.Height = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+#endif
 			}
 
 			xnaDeviceManager.IsFullScreen = isFullscreen;
