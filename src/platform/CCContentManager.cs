@@ -77,7 +77,7 @@ namespace CocosSharp
 
 		Dictionary<string, AssetEntry> loadedAssets;
 		Dictionary<string, string> assetLookupDict = new Dictionary<string, string>();
-		Dictionary<string, string> failedAssets = new Dictionary<string, string>();
+		Dictionary<Tuple<string, Type>, string> failedAssets = new Dictionary<Tuple<string, Type>, string>();
 
 		List<string> searchPaths = new List<string>();
 		List<string> searchResolutionsOrder = new List<string>(); 
@@ -101,73 +101,7 @@ namespace CocosSharp
         internal static void Initialize(IServiceProvider serviceProvider, string rootDirectory)
         {
             SharedContentManager = new CCContentManager(serviceProvider, rootDirectory);
-#if IOS || WINDOWS_PHONE8
-            InitializeContentTypeReaders();
-#endif
         }
-
-#if IOS || WINDOWS_PHONE8
-        static bool readersInited;
-
-        static void InitializeContentTypeReaders()
-        {
-            // Please read the following discussions for the reasons of this.
-            // http://monogame.codeplex.com/discussions/393775
-            // http://monogame.codeplex.com/discussions/396792
-            // 
-            // https://github.com/mono/MonoGame/pull/726
-            //
-            // Also search Google for -> ContentTypeReaderManager.AddTypeCreator
-
-            if (readersInited)
-            {
-                return;
-            }
-
-            // .FNT Reader
-            ContentTypeReaderManager.AddTypeCreator(
-                "Microsoft.Xna.Framework.Content.DictionaryReader`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[CocosSharp.CCBMFontConfiguration+CCBMGlyphDef, CocosSharp, Version=2.0.3.0, Culture=neutral, PublicKeyToken=null]]",
-                () => new DictionaryReader<Int32, CCBMFontConfiguration.CCBMGlyphDef>()
-
-                );
-
-            ContentTypeReaderManager.AddTypeCreator(
-                "Microsoft.Xna.Framework.Content.DictionaryReader`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[CocosSharp.CCBMFontConfiguration+CCKerningHashElement, CocosSharp, Version=2.0.3.0, Culture=neutral, PublicKeyToken=null]]",
-                () => new DictionaryReader<Int32, CCBMFontConfiguration.CCKerningHashElement>()
-
-                );
-            ContentTypeReaderManager.AddTypeCreator(
-		"Microsoft.Xna.Framework.Content.ReflectiveReader`1[[CocosSharp.CCRect, CocosSharp, Version=2.0.3.0, Culture=neutral, PublicKeyToken=null]]",
-                () => new CCRectReader()
-
-                );
-
-            ContentTypeReaderManager.AddTypeCreator(
-		"Microsoft.Xna.Framework.Content.ReflectiveReader`1[[CocosSharp.CCPoint, CocosSharp, Version=2.0.3.0, Culture=neutral, PublicKeyToken=null]]",
-                () => new CCPointReader()
-
-                );
-            ContentTypeReaderManager.AddTypeCreator(
-		"Microsoft.Xna.Framework.Content.ReflectiveReader`1[[CocosSharp.CCSize, CocosSharp, Version=2.0.3.0, Culture=neutral, PublicKeyToken=null]]",
-                () => new CCSizeReader()
-
-                );
-
-            ContentTypeReaderManager.AddTypeCreator(
-		"Microsoft.Xna.Framework.Content.ReflectiveReader`1[[CocosSharp.CCBMFontConfiguration+CCKerningHashElement, CocosSharp, Version=2.0.3.0, Culture=neutral, PublicKeyToken=null]]",
-                () => new KerningHashElementReader()
-
-                );
-
-            ContentTypeReaderManager.AddTypeCreator(
-		"Microsoft.Xna.Framework.Content.ReflectiveReader`1[[CocosSharp.CCBMFontConfiguration+CCBMGlyphPadding, CocosSharp, Version=2.0.3.0, Culture=neutral, PublicKeyToken=null]]",
-                () => new CCBMFontPaddingtReader()
-
-                );
-
-            readersInited = true;
-        }
-#endif
 
 		string GetRealName(string assetName)
 		{
@@ -180,7 +114,8 @@ namespace CocosSharp
 
 		public T TryLoad<T>(string assetName, bool weakReference=false)
         {
-            if (failedAssets.ContainsKey(assetName))
+            var assetKey = Tuple.Create(assetName, typeof(T));
+            if (failedAssets.ContainsKey(assetKey))
             {
                 return default(T);
             }
@@ -191,7 +126,7 @@ namespace CocosSharp
             }
             catch (Exception)
             {
-                failedAssets[assetName] = null;
+                failedAssets[assetKey] = null;
                 
                 return default(T);
             }
@@ -199,7 +134,8 @@ namespace CocosSharp
 
         public override T Load<T>(string assetName)
         {
-            if (failedAssets.ContainsKey(assetName))
+            var assetKey = Tuple.Create(assetName, typeof(T));
+            if (failedAssets.ContainsKey(assetKey))
             {
                 throw new ContentLoadException("Failed to load the asset file from " + assetName);
             }
@@ -210,7 +146,7 @@ namespace CocosSharp
             }
             catch (Exception)
             {
-                failedAssets[assetName] = null;
+                failedAssets[assetKey] = null;
 
                 throw;
             }

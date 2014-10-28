@@ -25,6 +25,8 @@ namespace CocosSharp
 
         protected bool isColorModifiedByOpacity = false;
 
+        protected int LineHeight { get; set; }
+
         public override CCPoint AnchorPoint
         {
             get { return base.AnchorPoint; }
@@ -102,7 +104,7 @@ namespace CocosSharp
             }
         }
 
-        public CCPoint Position
+        public override CCPoint Position
         {
             get { return base.Position; }
             set
@@ -110,6 +112,46 @@ namespace CocosSharp
                 if (base.Position != value)
                 {
                     base.Position = value;
+                    IsDirty = true;
+                }
+            }
+        }
+
+        public override float PositionX
+        {
+            get { return base.PositionX; }
+            set
+            {
+                if (base.PositionX != value)
+                {
+                    base.PositionX = value;
+                    IsDirty = true;
+                }
+            }
+        }
+
+        public override float PositionY
+        {
+            get { return base.PositionY; }
+            set
+            {
+                if (base.PositionY != value)
+                {
+                    base.PositionY = value;
+                    IsDirty = true;
+                }
+            }
+        }
+
+        CCSize contentSize;
+        public override CCSize ContentSize
+        {
+            get { return contentSize; }
+            set
+            {
+                if (contentSize != value)
+                {
+                    contentSize = value;
                     IsDirty = true;
                 }
             }
@@ -417,11 +459,11 @@ namespace CocosSharp
                 }
             }
 
-            var commonHeight = FontConfiguration.CommonHeight;
+            LineHeight = FontConfiguration.CommonHeight;
 
-            totalHeight = commonHeight * quantityOfLines;
+            totalHeight = LineHeight * quantityOfLines;
             nextFontPositionY = 0 -
-                (commonHeight - commonHeight * quantityOfLines);
+                (LineHeight - LineHeight * quantityOfLines);
 
             CCBMFontConfiguration.CCBMGlyphDef fontDef = null;
             CCRect fontCharTextureRect;
@@ -434,7 +476,7 @@ namespace CocosSharp
                 if (c == '\n')
                 {
                     nextFontPositionX = 0;
-                    nextFontPositionY -= commonHeight;
+                    nextFontPositionY -= LineHeight;
                     continue;
                 }
 
@@ -546,10 +588,9 @@ namespace CocosSharp
                 labelDimensions.Height > 0 ? labelDimensions.Height : tmpSize.Height
             );
 
-
+            ContentSize = labelDimensions;
             anchorPointInPoints = new CCPoint(labelDimensions.Width * AnchorPoint.X, labelDimensions.Height * AnchorPoint.Y);
             labelDimensions = tmpDimensions;
-
             UpdatePositionTransform();
         }
 
@@ -560,16 +601,16 @@ namespace CocosSharp
             // Since we are extending SpriteBatchNode we will have to do our own transforms on the sprites.
 
             // Translate values
+
             float x = Position.X;
             float y = Position.Y;
 
-            var affineLocalTransform = CCAffineTransform.Identity;
-
-            if (IgnoreAnchorPointForPosition)
+            if (!IgnoreAnchorPointForPosition && labelDimensions.Width > 0)
             {
-                x += anchorPointInPoints.X;
-                y += anchorPointInPoints.Y;
+                x -= AnchorPointInPoints.X;
             }
+
+            var affineLocalTransform = CCAffineTransform.Identity;
 
             // Rotation values
             // Change rotation code to handle X and Y
@@ -893,21 +934,17 @@ namespace CocosSharp
 
                         lineWidth = lastChar.Position.X + lastChar.ContentSize.Center.X;
 
-                        if (horzAlignment != CCTextAlignment.Left)
+                        var shift = PositionX + (labelDimensions.Width - lineWidth);
+                        if (horzAlignment == CCTextAlignment.Center)
+                                shift /= 2;
+
+                        for (int j = 0; j < line_length; j++)
                         {
-                            var shift = PositionX + (labelDimensions.Width - lineWidth);
-                            if (horzAlignment == CCTextAlignment.Center)
-                                    shift /= 2;
+                            index = i + j + lineNumber;
+                            if (index < 0) continue;
 
-                            for (int j = 0; j < line_length; j++)
-                            {
-                                index = i + j + lineNumber;
-                                if (index < 0) continue;
-
-                                var characterSprite = this[index];
-                                characterSprite.PositionX += shift;
-                            }
-
+                            var characterSprite = this[index];
+                            characterSprite.PositionX += shift;
                         }
 
                         i += line_length;
@@ -942,8 +979,9 @@ namespace CocosSharp
 
                 for (int i = 0; i < str_len; i++)
                 {
-                    var characterSprite = this[i];
-                    characterSprite.PositionY += yOffset;
+                    var characterSprite = this[i] as CCSprite;
+                    if (characterSprite != null && characterSprite.Visible)
+                        characterSprite.PositionY += yOffset;
                 }
             }
                
@@ -951,12 +989,12 @@ namespace CocosSharp
 
         private float GetLetterPosXLeft(CCSprite sp)
         {
-            return sp.Position.X * ScaleX - (sp.ContentSize.Width * ScaleX * sp.AnchorPoint.X);
+            return sp.Position.X * ScaleX;
         }
 
         private float GetLetterPosXRight(CCSprite sp)
         {
-            return sp.Position.X * ScaleX + (sp.ContentSize.Width * ScaleX * sp.AnchorPoint.X);
+            return (sp.Position.X + sp.ContentSize.Width) * ScaleX;
         }
 
 

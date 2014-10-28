@@ -30,7 +30,7 @@ namespace tests
 		private CCSprite arrows;
 		private CCLabelBMFont label;
 		private bool drag;
-        private CCMenuItemFont m_pLastAlignmentItem;
+        private CCMenuItemFont lastAlignmentItem;
 		private CCMenuItemFont lastSentenceItem;
 
         public BitmapFontMultiLineAlignment()
@@ -50,13 +50,13 @@ namespace tests
             base.AddedToScene();
 
             // ask director the the window size
-            var size = Layer.VisibleBoundsWorldspace.Size;
+            var size = VisibleBoundsWorldspace.Size;
 
-			// create and initialize a Label
-			label = new CCLabelBMFont(LongSentencesExample, "fonts/markerFelt.fnt", size.Width / 1.5f,
+            // create and initialize a Label
+			label = new CCLabelBMFont(LongSentencesExample, "fonts/markerFelt.fnt", size.Width / 3f,
 				CCTextAlignment.Center);
 
-			arrowsBar = new CCSprite("Images/arrowsBar");
+            arrowsBar = new CCSprite("Images/arrowsBar");
 			arrows = new CCSprite("Images/arrows");
 
 			CCMenuItemFont.FontSize = 20;
@@ -83,7 +83,7 @@ namespace tests
 			alignmentMenu.AlignItemsHorizontally(alignmentItemPadding);
 
 			center.Color = CCColor3B.Red;
-			m_pLastAlignmentItem = center;
+            lastAlignmentItem = center;
 			left.Tag = LeftAlign;
 			center.Tag = CenterAlign;
 			right.Tag = RightAlign;
@@ -114,19 +114,19 @@ namespace tests
         {
             var item = (CCMenuItemFont) sender;
             item.Color = CCColor3B.Red;
-            m_pLastAlignmentItem.Color = CCColor3B.White;
-            m_pLastAlignmentItem = item;
+            lastAlignmentItem.Color = CCColor3B.White;
+            lastAlignmentItem = item;
 
             switch (item.Tag)
             {
                 case LongSentences:
-                    label.Text = (LongSentencesExample);
+                    label.Text = LongSentencesExample;
                     break;
                 case LineBreaks:
-                    label.Text = (LineBreaksExample);
+                    label.Text = LineBreaksExample;
                     break;
                 case Mixed:
-                    label.Text = (MixedExample);
+                    label.Text = MixedExample;
                     break;
 
                 default:
@@ -140,8 +140,8 @@ namespace tests
         {
             var item = (CCMenuItemFont) sender;
             item.Color = CCColor3B.Red;
-            m_pLastAlignmentItem.Color = CCColor3B.White;
-            m_pLastAlignmentItem = item;
+            lastAlignmentItem.Color = CCColor3B.White;
+            lastAlignmentItem = item;
 
             switch (item.Tag)
             {
@@ -165,7 +165,7 @@ namespace tests
 		void onTouchesBegan(List<CCTouch> pTouches, CCEvent touchEvent)
         {
             CCTouch touch = pTouches[0];
-            CCPoint location = Layer.ScreenToWorldspace(touch.LocationOnScreen);
+            CCPoint location = touch.Location;
 
             if (arrows.BoundingBox.ContainsPoint(location))
             {
@@ -190,23 +190,22 @@ namespace tests
             }
 
             CCTouch touch = pTouches[0];
-            CCPoint location = Layer.ScreenToWorldspace(touch.LocationOnScreen);
+            CCPoint location = touch.Location;
 
-            CCSize winSize = Layer.VisibleBoundsWorldspace.Size;
+            CCSize winSize = VisibleBoundsWorldspace.Size;
 
             arrows.Position = new CCPoint(Math.Max(Math.Min(location.X, ArrowsMax * winSize.Width), ArrowsMin * winSize.Width),
                                                          arrows.Position.Y);
 
-            float labelWidth = Math.Abs(arrows.Position.X - label.Position.X) * 2;
+            float labelWidth = Math.Abs(arrows.Position.X - label.Position.X);
 
             label.Dimensions = new CCSize(labelWidth, 0);
         }
 
         private void snapArrowsToEdge()
         {
-            arrows.Position =
-				new CCPoint(label.Position.X + label.ContentSize.Width / 2,
-                            label.Position.Y);
+            arrows.PositionX = label.Position.X + label.ContentSize.Width;
+            arrows.PositionY = label.Position.Y;
         }
 
         public override string title()

@@ -1,10 +1,9 @@
 <?xml version="1.0"?>
-<project name="Cococs2D-XNA Build Script" default="build" basedir=".">
-  <description>Default Cocos2D-XNA Automated Build script</description>
+<project name="CococsSharp Build Script" default="build" basedir=".">
+  <description>Default CocosSharp Automated Build script</description>
   <property name="os" value="${operating-system::get-platform(environment::get-operating-system())}" />
   <property name="mdtooldir" value="/Applications/Xamarin\ Studio.app/Contents/MacOS"/>
   <property name="configuration" value="Release" unless="${property::exists('configuration')}" />
-  <!--property name="psmtooldir" value="C:\Program Files (x86)\SCE\PSM\tools\PsmStudio\bin" /-->
 
   <target name="checkos" description="check the operating system">
     <property name="os" value="${operating-system::get-platform(environment::get-operating-system())}"/>
@@ -20,7 +19,7 @@
   </target>
 
   <target name="clean" depends="checkos">
-    <delete dir="${project::get-base-directory()}\cocos2d\obj" verbose="true">
+    <delete dir="${project::get-base-directory()}\CocosSharp\obj" verbose="true">
     </delete>
   </target>
 
@@ -30,12 +29,10 @@
     <call target="buildPCL"/>
     <call target="buildwindows"/>
     <call target="buildwindowsphone8"/>
-    <call target="buildwindows8"/>
     <call target="buildios"/>
     <call target="buildmac"/>
     <call target="buildandroid"/>
-    <call target="buildouya"/>
-
+    <call target="buildwindows8"/>
     <call target="buildnugets"/>
 
     <!--call target="buildtemplates"/-->
@@ -43,8 +40,8 @@
 
   <target name="monogame" description="Build MonoGame Release" depends="checkos">
     <if test="${os == 'Win32NT'}">
-    	<copy file="MonoGame.build" tofile="MonoGame/default.build" overwrite="true"/>
-    	<nant buildfile="MonoGame/default.build" target="build" />
+      <copy file="MonoGame.build" tofile="MonoGame/default.build" overwrite="true"/>
+    	<!--nant buildfile="MonoGame/default.build" target="build" /-->
     </if>
 
   </target>
@@ -62,8 +59,10 @@
 
   <target name="buildwindows" description="Build Windows" depends="clean">
     <if test="${os == 'Win32NT'}">
+      
       <exec program="msbuild " commandline="CocosSharp.Windows.sln /t:Clean /p:Configuration=${configuration}" />
       <exec program="msbuild " commandline="CocosSharp.Windows.sln /t:Build /p:Configuration=${configuration}" />
+      <nant buildfile="MonoGame/default.build" target="buildwindows" />
       <exec program="msbuild " commandline="CocosSharp.WindowsGL.sln /t:Clean /p:Configuration=${configuration}" />
       <exec program="msbuild " commandline="CocosSharp.WindowsGL.sln /t:Build /p:Configuration=${configuration}" />
       <exec program="msbuild " commandline="CocosSharp.WindowsDX.sln /t:Clean /p:Configuration=${configuration}" />
@@ -80,6 +79,7 @@
   <target name="buildwindowsphone8" description="Build Windows Phone 8" depends="clean">
     <if test="${os == 'Win32NT'}">
       <if test="${file::exists('c:\Program Files (x86)\MSBuild\Microsoft\WindowsPhone\v8.0\Microsoft.Cpp.WindowsPhone.8.0.targets') or file::exists('c:\Program Files\MSBuild\Microsoft\WindowsPhone\v8.0\Microsoft.Cpp.WindowsPhone.8.0.targets')}">
+        <nant buildfile="MonoGame/default.build" target="buildwindowsphone" />
         <exec program="msbuild " commandline='CocosSharp.WindowsPhone.sln /t:Clean /p:Configuration=${configuration} /p:Platform="ARM"' />
         <exec program="msbuild " commandline='CocosSharp.WindowsPhone.sln /t:Build /p:Configuration=${configuration} /p:Platform="ARM"' />
         <exec program="msbuild " commandline='CocosSharp.WindowsPhone.sln /t:Clean /p:Configuration=${configuration} /p:Platform="x86"' />
@@ -90,14 +90,16 @@
 
   <target name="buildwindows8" description="Build Windows 8" depends="clean">
     <if test="${os == 'Win32NT'}">
+      <nant buildfile="MonoGame/default.build" target="buildwindows8" />
       <exec program="msbuild " commandline="CocosSharp.Windows8.sln /t:Clean /p:Configuration=${configuration}" />
-      <exec program="msbuild " commandline="CocosSharp.Windows8.sln /t:Build /p:Configuration=${configuration}" />
+      <exec program="msbuild " commandline="CocosSharp.Windows8.sln /t:Rebuild /p:Configuration=${configuration}" />
     </if>
   </target>
 
   <target name="buildios" description="Build iOS" depends="clean">
     <if test="${os == 'Win32NT'}">
       <if test="${file::exists('C:\Program Files (x86)\MSBuild\Xamarin\iOS\Xamarin.MonoTouch.CSharp.targets')}">
+	<nant buildfile="MonoGame/default.build" target="buildios" />
         <exec program="msbuild " commandline="CocosSharp.iOS.sln /t:Clean /p:Configuration=${configuration}" />
         <exec program="msbuild " commandline="CocosSharp.iOS.sln /t:Build /p:Configuration=${configuration}" />
       </if>
@@ -128,14 +130,14 @@
   <target name="buildouya" description="Build Android" depends="clean">
     <if test="${os == 'Win32NT'}">
       <if test="${file::exists('C:\Program Files (x86)\MSBuild\Xamarin\Android\Xamarin.Android.CSharp.targets')}">
-          <exec program="msbuild " commandline="CocosSharp.Ouya.sln /t:Clean /p:Configuration=${configuration}" />
-          <exec program="msbuild " commandline="CocosSharp.Ouya.sln /t:Build /p:Configuration=${configuration}" />
+          <!--exec program="msbuild " commandline="CocosSharp.Ouya.sln /t:Clean /p:Configuration=${configuration}" />
+          <exec program="msbuild " commandline="CocosSharp.Ouya.sln /t:Build /p:Configuration=${configuration}" /-->
       </if>
     </if>
     <if test="${os == 'MacOS'}">
       <if test="${file::exists('/Developer/MonoAndroid/bin/mandroid')}">
-        <exec program="mdtool" basedir="${mdtooldir}" commandline="build -t:Clean -c:${configuration} CocosSharp.ouya.sln" />
-        <exec program="mdtool" basedir="${mdtooldir}" commandline="build -t:Build -c:${configuration} CocosSharp.ouya.sln" />
+        <!--exec program="mdtool" basedir="${mdtooldir}" commandline="build -t:Clean -c:${configuration} CocosSharp.ouya.sln" />
+        <exec program="mdtool" basedir="${mdtooldir}" commandline="build -t:Build -c:${configuration} CocosSharp.ouya.sln" /-->
       </if>
     </if>
   </target>
@@ -185,10 +187,9 @@
       <exec program="${nuget.cmd.dir.path} " commandline='pack "${nuspec.file.dir.path}CocosSharp.WindowsPhone8.nuspec" -OutputDirectory "${packages.dir.path}"' />
       <exec program="${nuget.cmd.dir.path} " commandline='pack "${nuspec.file.dir.path}CocosSharp.iOS.nuspec" -OutputDirectory "${packages.dir.path}"' />
       <exec program="${nuget.cmd.dir.path} " commandline='pack "${nuspec.file.dir.path}CocosSharp.Android.nuspec" -OutputDirectory "${packages.dir.path}"' />
-      <exec program="${nuget.cmd.dir.path} " commandline='pack "${nuspec.file.dir.path}CocosSharp.Ouya.nuspec" -OutputDirectory "${packages.dir.path}"' />
-      <!--exec program="${nuget.cmd.dir.path} " commandline='pack "${nuspec.file.dir.path}Cocos2D.MGCB.nuspec" -OutputDirectory "${packages.dir.path}"' /-->
       <exec program="${nuget.cmd.dir.path} " commandline='pack "${nuspec.file.dir.path}CocosSharp.WindowsDX.nuspec" -OutputDirectory "${packages.dir.path}"' />
-	<exec program="${nuget.cmd.dir.path} " commandline='pack "${nuspec.physics.file.dir.path}ChipmunkSharp.Windows.nuspec" -OutputDirectory "${packages.dir.path}"  ' />
+      <!--exec program="${nuget.cmd.dir.path} " commandline='pack "${nuspec.file.dir.path}Cocos2D.MGCB.nuspec" -OutputDirectory "${packages.dir.path}"' /-->
+      <exec program="${nuget.cmd.dir.path} " commandline='pack "${nuspec.physics.file.dir.path}ChipmunkSharp.Windows.nuspec" -OutputDirectory "${packages.dir.path}"' />
     </if>
     <if test="${os == 'MacOS'}">
 
@@ -211,7 +212,6 @@
       <exec program="mono" basedir="${monodir}" commandline=' "${nuget.cmd.dir.path}" pack "${nuspec.file.dir.path}CocosSharp.MacOS.nuspec" -OutputDirectory "${packages.dir.path}" -BasePath ./' />
       <exec program="mono" basedir="${monodir}" commandline=' "${nuget.cmd.dir.path}" pack "${nuspec.file.dir.path}CocosSharp.iOS.Mac.nuspec" -OutputDirectory "${packages.dir.path}" -BasePath ./' />
       <exec program="mono" basedir="${monodir}" commandline=' "${nuget.cmd.dir.path}" pack "${nuspec.file.dir.path}CocosSharp.Android.Mac.nuspec" -OutputDirectory "${packages.dir.path}" -BasePath ./' />
-      <exec program="mono" basedir="${monodir}" commandline=' "${nuget.cmd.dir.path}" pack "${nuspec.file.dir.path}CocosSharp.Ouya.Mac.nuspec" -OutputDirectory "${packages.dir.path}" -BasePath ./' />
       <exec program="mono" basedir="${monodir}" commandline=' "${nuget.cmd.dir.path}" pack "${nuspec.physics.file.dir.path}ChipmunkSharp.Mac.nuspec" -OutputDirectory "${packages.dir.path}" -BasePath "./src/external lib/ChipmunkSharp/"' /> 
     </if>
   </target>

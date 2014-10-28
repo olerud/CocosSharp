@@ -502,13 +502,13 @@ namespace CocosSharp
             }
         }
 
-        public float PositionX
+        public virtual float PositionX
         {
             get { return position.X; }
             set { Position = new CCPoint(value, position.Y); }
         }
 
-        public float PositionY
+        public virtual float PositionY
         {
             get { return position.Y; }
             set { Position = new CCPoint(position.X, value); }
@@ -626,12 +626,12 @@ namespace CocosSharp
             {
                 CCPoint boundingBoxOrigin = Position;
 
-                if(IgnoreAnchorPointForPosition == false) 
+                if(!IgnoreAnchorPointForPosition) 
                 {
                     boundingBoxOrigin -= AnchorPointInPoints;
                 }
 
-                return new CCRect(boundingBoxOrigin.X, boundingBoxOrigin.Y, contentSize.Width, contentSize.Height);
+                return new CCRect(boundingBoxOrigin.X, boundingBoxOrigin.Y, ContentSize.Width, ContentSize.Height);
             }
         }
 
@@ -641,7 +641,7 @@ namespace CocosSharp
             get 
             { 
                 CCAffineTransform localTransform = AffineLocalTransform;
-                CCRect transformedBounds = localTransform.Transform(new CCRect(0.0f, 0.0f, contentSize.Width, contentSize.Height));
+                CCRect transformedBounds = localTransform.Transform(new CCRect(0.0f, 0.0f, ContentSize.Width, ContentSize.Height));
                 return transformedBounds; 
             }
         }
@@ -652,7 +652,7 @@ namespace CocosSharp
             get 
             { 
                 CCAffineTransform localTransform = AffineWorldTransform;
-                CCRect worldtransformedBounds = localTransform.Transform(new CCRect(0.0f, 0.0f, contentSize.Width, contentSize.Height));
+                CCRect worldtransformedBounds = localTransform.Transform(new CCRect(0.0f, 0.0f, ContentSize.Width, ContentSize.Height));
                 return worldtransformedBounds; 
             }
         }
@@ -1476,11 +1476,6 @@ namespace CocosSharp
                 child.ResetCleanState();
             }
 
-            // Try to setup defaults if need be
-            if (child is CCLayer &&  this is CCScene &&
-                (child.Camera == null || child.Camera.OrthographicViewSizeWorldspace == CCSize.Zero )) 
-                child.Camera = new CCCamera (this.Window.DesignResolutionSize);
-
             // We want all our children to have the same layer as us
             // Set this before we call child.OnEnter
             child.Layer = this.Layer;
@@ -2048,9 +2043,13 @@ namespace CocosSharp
                 // draw children zOrder < 0
                 for (; i < count; ++i)
                 {
-                    if (elements[i].Visible && elements[i].zOrder < 0)
+                    if (elements[i].zOrder < 0)
                     {
-                        elements[i].Visit();
+                        // don't break loop on invisible children
+                        if (elements[i].Visible)
+                        {
+                            elements[i].Visit();
+                        }
                     }
                     else
                     {
@@ -2064,7 +2063,7 @@ namespace CocosSharp
                 for (; i < count; ++i)
                 {
                     // Draw the z >= 0 order children next.
-                    if (elements[i].Visible/* && elements[i].m_nZOrder >= 0*/)
+                    if (elements[i].Visible)
                     {
                         elements[i].Visit();
                     }

@@ -33,8 +33,12 @@ namespace CocosSharp
 {
     public class CCLayer : CCNode
     {
+        public static CCCameraProjection DefaultCameraProjection = CCCameraProjection.Projection3D;
+
         bool restoreScissor;
         bool noDrawChildren;
+
+        CCCameraProjection initCameraProjection;
 
         CCRenderTexture renderTexture;
         CCClipMode childClippingMode;
@@ -123,23 +127,37 @@ namespace CocosSharp
         #region Constructors
 
         public CCLayer()
-            : this(null)
-        {  }
+            : this(DefaultCameraProjection)
+        { 
+        }
 
-        public CCLayer(CCSize visibleBoundsDimensions, CCClipMode clipMode = CCClipMode.None)
-            : this(new CCCamera(visibleBoundsDimensions), clipMode)
-        {  }
+        public CCLayer(CCSize visibleBoundsDimensions, 
+            CCClipMode clipMode = CCClipMode.None)
+            : this(visibleBoundsDimensions, DefaultCameraProjection, clipMode)
+        {  
+        }
 
-        public CCLayer(CCCamera camera, CCClipMode clipMode) : base()
+        public CCLayer(CCSize visibleBoundsDimensions, 
+            CCCameraProjection cameraProjection, 
+            CCClipMode clipMode = CCClipMode.None)
+            : this(new CCCamera(cameraProjection, visibleBoundsDimensions), clipMode)
+        {  
+        }
+
+        public CCLayer(CCCamera camera, CCClipMode clipMode = CCClipMode.None) 
+            : this(camera.Projection, clipMode)
         {
-            ChildClippingMode = clipMode;
-            IgnoreAnchorPointForPosition = true;
-			AnchorPoint = CCPoint.AnchorMiddle;
             Camera = camera;
         }
 
-        public CCLayer(CCCamera camera) : this(camera, CCClipMode.None)
+        public CCLayer(CCCameraProjection cameraProjection, CCClipMode clipMode = CCClipMode.None)
+            : base()
         {
+            ChildClippingMode = clipMode;
+            IgnoreAnchorPointForPosition = true;
+            AnchorPoint = CCPoint.AnchorMiddle;
+
+            initCameraProjection = cameraProjection;
         }
 
         void UpdateClipping()
@@ -168,10 +186,8 @@ namespace CocosSharp
 
             if(Camera == null)
             {
-                CCRect visibleBoundsScreenspace = Scene.VisibleBoundsScreenspace;
-                Camera = new CCCamera(visibleBoundsScreenspace);
+                Camera = new CCCamera (initCameraProjection, this.Window.DesignResolutionSize);
             }
-
         }
 
         void OnCameraVisibleBoundsChanged(object sender, EventArgs e)
@@ -233,9 +249,9 @@ namespace CocosSharp
             CCPoint bottomRightPoint = new CCPoint(bottomRight.X, bottomRight.Y);
 
             visibleBoundsWorldspace = new CCRect(
-                bottomLeftPoint.X, bottomLeftPoint.Y, 
-                (int)((bottomRightPoint.X - bottomLeftPoint.X)), 
-                (int)((topLeftPoint.Y - bottomLeftPoint.Y)));
+                (float)Math.Round(bottomLeftPoint.X), (float)Math.Round(bottomLeftPoint.Y), 
+                (float)Math.Round(bottomRightPoint.X - bottomLeftPoint.X), 
+                (float)Math.Round(topLeftPoint.Y - bottomLeftPoint.Y));
 
             anchorPointInPoints = new CCPoint(visibleBoundsWorldspace.Size.Width * AnchorPoint.X, visibleBoundsWorldspace.Size.Height * AnchorPoint.Y);
         }
@@ -291,7 +307,8 @@ namespace CocosSharp
                     CCNode child = arrayData[i];
                     if (child.ZOrder < 0)
                     {
-                        child.Visit();
+                        if(child.Visible)
+                            child.Visit();
                     }
                     else
                     {

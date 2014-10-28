@@ -6,7 +6,7 @@ namespace CocosSharp
 {
     public enum TestCases
     {
-        TEST_ACCELEROMRTER = 0,
+        TEST_ACCELEROMRTER,
         TEST_ACTION_MANAGER,
         TEST_EASE_ACTIONS,
         TEST_PROGRESS_ACTIONS,

@@ -130,6 +130,18 @@ namespace CocosSharp
 
         public override CCDirector Director { get; set; }
 
+        public override CCLayer Layer
+        {
+            get
+            {
+                return null;
+            }
+
+            internal set
+            {
+            }
+        }
+
         public override CCCamera Camera 
         { 
             get { return null; }
@@ -205,14 +217,18 @@ namespace CocosSharp
 #endif
 
             SceneResolutionPolicy = window.DesignResolutionPolicy;
+
+            UpdateResolutionRatios();
         }
 
 #if USE_PHYSICS
 		public CCScene(CCWindow window, CCDirector director, bool physics = false)
 			: this(window, new CCViewport(new CCRect(0.0f, 0.0f, 1.0f, 1.0f)), director, physics)
 #else
-		public CCScene(CCWindow window, CCDirector director)
-			: this(window, new CCViewport(new CCRect(0.0f, 0.0f, 1.0f, 1.0f)), director)
+        public CCScene(CCWindow window, CCDirector director)
+            : this(window, 
+                new CCViewport(new CCRect(0.0f, 0.0f, 1.0f, 1.0f), window.SupportedDisplayOrientations, window.CurrentDisplayOrientation), 
+                director)
 #endif
         {
         }
@@ -257,48 +273,29 @@ namespace CocosSharp
 
         #region Resolution Policy
 
-        void UpdateResolutionRatios ()
+        void UpdateResolutionRatios()
         {
-
-            if (Children != null && SceneResolutionPolicy != CCSceneResolutionPolicy.Custom)
+            if (Window != null && SceneResolutionPolicy != CCSceneResolutionPolicy.Custom)
             {
                 bool dirtyViewport = false;
-                var unionedBounds = CCRect.Zero;
+                CCSize designSize = window.DesignResolutionSize;
+                CCRect designBounds = new CCRect(0.0f, 0.0f, designSize.Width, designSize.Height);
 
-                foreach (var child in Children)
-                {
-                    if (child != null && child is CCLayer)
-                    {
-                        var layer = child as CCLayer;
-                        unionedBounds.Origin.X = Math.Min (unionedBounds.Origin.X, layer.VisibleBoundsWorldspace.Origin.X);
-                        unionedBounds.Origin.Y = Math.Min (unionedBounds.Origin.Y, layer.VisibleBoundsWorldspace.Origin.Y);
-                        unionedBounds.Size.Width = Math.Max (unionedBounds.MaxX, layer.VisibleBoundsWorldspace.MaxX) - unionedBounds.Origin.X;
-                        unionedBounds.Size.Height = Math.Max (unionedBounds.MaxY, layer.VisibleBoundsWorldspace.MaxY) - unionedBounds.Origin.Y;
-                    }
-                }
-
-                // we have the calculated size of all all the bounds
-                contentSize = unionedBounds.Size;
+                contentSize = designSize;
                 anchorPointInPoints = new CCPoint(contentSize.Width * AnchorPoint.X, contentSize.Height * AnchorPoint.Y);
-                // Calculate viewport ratios if not set to custom
 
-                //var resolutionPolicy = Scene.SceneResolutionPolicy;
-
-                if (unionedBounds != CCRect.Zero)
+                if (designBounds != CCRect.Zero)
                 {
-                    // Calculate Landscape Ratio
-                    var viewportRect = CalculateResolutionRatio(unionedBounds, resolutionPolicy);
+                    // This is specific to the current orientation because WindowSize will change depending
+                    // on whether it's landscape or portrait
+                    var viewportRect = CalculateResolutionRatio(designBounds, resolutionPolicy);
                     dirtyViewport = Viewport.exactFitLandscapeRatio != viewportRect;
+
+                    // Will create the correct ratio for the given orientation
+                    // So set both landscape and portrait ratios to be the same
+                    // Once the orientation changes, the rect will be updated
                     Viewport.exactFitLandscapeRatio = viewportRect;
-
-                    // Calculate Portrait Ratio
-                    var portraitBounds = unionedBounds.InvertedSize;
-                    viewportRect = CalculateResolutionRatio(portraitBounds, resolutionPolicy);
-                    dirtyViewport = Viewport.exactFitPortraitRatio != viewportRect;
                     Viewport.exactFitPortraitRatio = viewportRect;
-
-                    // End Calculate viewport ratios
-
                 }
 
                 if (dirtyViewport)
@@ -324,9 +321,6 @@ namespace CocosSharp
             var designResolutionSize = resolutionRect.Size;
             var viewPortRect = CCRect.Zero;
             float resolutionScaleX, resolutionScaleY;
-
-            // Not set anywhere right now.
-            var frameZoomFactor = 1;
 
             var screenSize = Scene.Window.WindowSizeInPixels;
 
@@ -360,13 +354,14 @@ namespace CocosSharp
             float viewPortW = designResolutionSize.Width * resolutionScaleX;
             float viewPortH = designResolutionSize.Height * resolutionScaleY;
 
-            viewPortRect = new CCRect((screenSize.Width - viewPortW) / 2, (screenSize.Height - viewPortH) / 2, viewPortW, viewPortH);
+            viewPortRect 
+                = new CCRect((screenSize.Width - viewPortW) / 2, (screenSize.Height - viewPortH) / 2, viewPortW, viewPortH);
 
             var viewportRatio = new CCRect(
-                ((x * resolutionScaleX * frameZoomFactor + viewPortRect.Origin.X * frameZoomFactor) / screenSize.Width),
-                ((y * resolutionScaleY * frameZoomFactor + viewPortRect.Origin.Y * frameZoomFactor) / screenSize.Height),
-                ((width * resolutionScaleX * frameZoomFactor) / screenSize.Width),
-                ((height * resolutionScaleY * frameZoomFactor) / screenSize.Height)
+                ((viewPortRect.Origin.X) / screenSize.Width),
+                ((viewPortRect.Origin.Y) / screenSize.Height),
+                ((viewPortRect.Size.Width) / screenSize.Width),
+                ((viewPortRect.Size.Height) / screenSize.Height)
             );
 
             return viewportRatio;

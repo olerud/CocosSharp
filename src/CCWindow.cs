@@ -26,7 +26,6 @@ namespace CocosSharp
         #endif
 
         public bool GamePadEnabled { get; set; }
-        public virtual double AnimationInterval { get; set; }
         public CCNode NotificationNode { get; set; }
         internal CCEventDispatcher EventDispatcher { get; private set; }
 
@@ -96,13 +95,11 @@ namespace CocosSharp
         public CCDisplayOrientation SupportedDisplayOrientations
         {
             get { return DrawManager.SupportedDisplayOrientations; }
-            set { DrawManager.SupportedDisplayOrientations = value; }
         }
 
         public CCDisplayOrientation CurrentDisplayOrientation
         {
             get { return (CCDisplayOrientation)XnaWindow.CurrentOrientation; }
-            set { DrawManager.CurrentDisplayOrientation = value; }
         }
 
         public CCApplication Application { get; private set; }
@@ -144,7 +141,10 @@ namespace CocosSharp
             this.XnaWindow = xnaWindow;
             xnaWindow.OrientationChanged += OnOrientationChanged;
             xnaWindow.ClientSizeChanged += OnWindowSizeChanged;
-            xnaWindow.AllowUserResizing = true;
+
+            // Trying to set user resize when game is full-screen will cause app to crash 
+            if(!deviceManager.IsFullScreen)
+                xnaWindow.AllowUserResizing = true;
 
             Application = application;
 
@@ -255,8 +255,6 @@ namespace CocosSharp
 
         void OnOrientationChanged(object sender, EventArgs e)
         {
-            CurrentDisplayOrientation = (CCDisplayOrientation)XnaWindow.CurrentOrientation;
-
             foreach(CCDirector director in sceneDirectors) 
             {
                 if(director.RunningScene != null) 

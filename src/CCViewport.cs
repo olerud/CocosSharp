@@ -4,31 +4,10 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace CocosSharp
 {
-    #region Enums
-
-    public enum CCViewportResolutionPolicy
-    {
-        // The entire application is visible in the specified area without trying to preserve the original aspect ratio. 
-        // Distortion can occur, and the application may appear stretched or compressed.
-        ExactFit,
-
-        // The entire application fills the specified area, without distortion but possibly with some cropping, 
-        // while maintaining the original aspect ratio of the application.
-        AspectFill,
-
-        // The entire application is visible in the specified area without distortion while maintaining the original 
-        // aspect ratio of the application. Borders can appear on two sides of the application.
-        AspectFit
-    }
-
-    #endregion Enums
-
-
     public class CCViewport
     {
         internal event EventHandler OnViewportChanged;
 
-        CCViewportResolutionPolicy resolutionPolicy;
         CCDisplayOrientation displayOrientation;
 
         internal CCRect exactFitLandscapeRatio;
@@ -41,19 +20,6 @@ namespace CocosSharp
 
 
         #region Properties
-
-        public CCViewportResolutionPolicy ResolutionPolicy 
-        { 
-            get { return resolutionPolicy; } 
-            set 
-            {
-                if (resolutionPolicy != value) 
-                {
-                    resolutionPolicy = value;
-                    UpdateViewport();
-                }
-            }
-        }
 
         public CCRect ExactFitLandscapeRatio
         {
@@ -139,8 +105,7 @@ namespace CocosSharp
         #region Constructors
 
         public CCViewport(
-			CCRect exactFitLandscapeRatioIn, CCRect exactFitPortraitRatioIn, 
-            CCViewportResolutionPolicy resolutionPolicyIn=CCViewportResolutionPolicy.ExactFit, 
+            CCRect exactFitLandscapeRatioIn, CCRect exactFitPortraitRatioIn, 
             CCDisplayOrientation displayOrientationIn=CCDisplayOrientation.LandscapeLeft)
         {
             if(exactFitPortraitRatioIn == default(CCRect))
@@ -148,18 +113,24 @@ namespace CocosSharp
                 exactFitPortraitRatioIn = exactFitLandscapeRatioIn;
             }
 
-            resolutionPolicy = resolutionPolicyIn;
             displayOrientation = displayOrientationIn;
             exactFitLandscapeRatio = exactFitLandscapeRatioIn;
             exactFitPortraitRatio = exactFitPortraitRatioIn;
         }
 
-		public CCViewport(
-			CCRect exactFitLandscapeRatioIn, 
-			CCViewportResolutionPolicy resolutionPolicyIn=CCViewportResolutionPolicy.ExactFit, 
-			CCDisplayOrientation displayOrientationIn=CCDisplayOrientation.LandscapeLeft)
-			: this (exactFitLandscapeRatioIn, exactFitLandscapeRatioIn, resolutionPolicyIn, displayOrientationIn)
-		{	}
+        public CCViewport(
+            CCRect exactFitLandscapeRatioIn, 
+            CCDisplayOrientation displayOrientationIn=CCDisplayOrientation.LandscapeLeft)
+            : this (exactFitLandscapeRatioIn, exactFitLandscapeRatioIn, displayOrientationIn)
+        {   }
+
+        internal CCViewport(
+            CCRect exactFitLandscapeRatioIn,
+            CCDisplayOrientation supportedDisplayOrientationIn,
+            CCDisplayOrientation currentDisplayOrientationIn)
+            : this(exactFitLandscapeRatioIn, currentDisplayOrientationIn)
+        {
+        }
 
         #endregion Constructors
 
@@ -172,7 +143,8 @@ namespace CocosSharp
             bool isPortrat = DisplayOrientation.IsPortrait();
 
             CCRect exactFitRectRatio = isPortrat ? ExactFitPortraitRatio : ExactFitLandscapeRatio;
-            CCSize screenSize = isPortrat ? landscapeScreenSizeInPixels.Inverted : landscapeScreenSizeInPixels;
+            CCSize portraitScreenSize = landscapeScreenSizeInPixels.Inverted;
+            CCSize screenSize = isPortrat ? portraitScreenSize : landscapeScreenSizeInPixels;
 
             Rectangle exactFitRectPixels = new Rectangle (
                 (int)(exactFitRectRatio.Origin.X * screenSize.Width), 
@@ -182,38 +154,6 @@ namespace CocosSharp
             );
 
             Rectangle xnaViewportRect = exactFitRectPixels;
-
-            float exactFitAspectRatio = exactFitRectPixels.Width / exactFitRectPixels.Height;
-            float screenAspectRatio = screenSize.Width / (float)screenSize.Height;
-
-            switch(ResolutionPolicy) 
-            {
-                case CCViewportResolutionPolicy.AspectFit:
-                    // The screen width > screen height    
-                    if (screenAspectRatio > 1.0f) 
-                    {
-                        xnaViewportRect.Height = (int) (xnaViewportRect.Width / screenAspectRatio);
-                    } 
-                    else 
-                    {
-                        xnaViewportRect.Width = (int) (xnaViewportRect.Height * screenAspectRatio);
-                    }
-                    break;
-                case CCViewportResolutionPolicy.AspectFill:
-                    // The exact fit viewport width > exact fit viewport height   
-                    if (exactFitAspectRatio > 1.0f) 
-                    {
-                        xnaViewportRect.Height = (int) (xnaViewportRect.Width / screenAspectRatio);
-                    } 
-                    else 
-                    {
-                        xnaViewportRect.Width = (int) (xnaViewportRect.Height * screenAspectRatio);
-                    }    
-                    break;
-                    // Defaults to exact fit
-                default:
-                    break;
-            }
 
             xnaViewportRect.X = (int)Math.Floor((exactFitRectPixels.Width - xnaViewportRect.Width) / 2.0f) + exactFitRectPixels.X;
             xnaViewportRect.Y = (int)Math.Floor((exactFitRectPixels.Height - xnaViewportRect.Height) / 2.0f) + exactFitRectPixels.Y;
